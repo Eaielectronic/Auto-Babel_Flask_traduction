@@ -47,7 +47,7 @@ msgstr "Hello"
 
 ```bash
 git clone https://github.com/Eaielectronic/Auto-Babel_Flask_traduction.git
-cd auto-babel
+cd Auto-Babel_Flask_traduction
 ```
 
 ### 2. Create virtual environment
@@ -139,8 +139,8 @@ Edit `translate.py` to change:
 
 1. Cloner le dépôt :
 ```bash
-git clone https://github.com/votre-nom/auto-babel.git
-cd auto-babel
+git clone https://github.com/Eaielectronic/Auto-Babel_Flask_traduction.git
+cd Auto-Babel_Flask_traduction
 ```
 
 2. Créer l'environnement :
