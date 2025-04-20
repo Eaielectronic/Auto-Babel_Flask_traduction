@@ -67,16 +67,10 @@ pip install -r requirements.txt
 - Go to [ollama.com/download](https://ollama.com/download)
 - Download and install for your OS
 
-#### 📦 Pull the model
+#### 📦 Pull the model and 🔄 Start Ollama (llama3)
 
 ```bash
-ollama pull llama3
-```
-
-#### 🔄 Start Ollama daemon
-
-```bash
-ollama serve
+ollama run llama3
 ```
 
 (Keep this running in the background)
