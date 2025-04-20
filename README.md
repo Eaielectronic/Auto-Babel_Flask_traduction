@@ -48,7 +48,7 @@ msgstr "Hello"
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/auto-babel.git
+git clone https://github.com/Eaielectronic/Auto-Babel_Flask_traduction.git
 cd auto-babel
 ```
 
