@@ -1,0 +1,12 @@
+auto-babel/
+│
+├── messages.po                # Fichier de départ
+├── messages.txt              # Fichier généré pour l’IA
+├── messages_translated.txt   # Fichier traduit par l’IA
+├── messages_final.po         # Fichier final complet
+│
+├── po_to_txt.py              # Convertisseur po → txt
+├── txt_to_po.py              # Convertisseur txt → po
+├── translate.py              # Script de traduction avec Ollama
+├── requirements.txt          # Dépendances
+└── README.md
