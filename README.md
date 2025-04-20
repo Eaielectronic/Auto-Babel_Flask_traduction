@@ -154,8 +154,7 @@ pip install -r requirements.txt
 
 3. Installer et lancer Ollama :
 ```bash
-ollama pull llama3
-ollama serve
+ollama run llama3
 ```
 
 Laisser `ollama serve` ouvert dans un terminal.
