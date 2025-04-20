@@ -2,11 +2,9 @@
 Automatic PO translation using a local Ollama AI model (LLaMA 3). Translate .po or .txt files line by line into gettext format (msgid/msgstr). Supports Windows, macOS, and Linux.
 
 
-Parfait ! Voici une **description du dépôt** + un **README bilingue (🇬🇧 English + 🇫🇷 Français)** clair, structuré, et détaillé.
+
 
 ---
-
-## 🧾 Description du dépôt (à mettre dans `description` sur GitHub)
 
 > Automatic PO translation using a local Ollama AI model (LLaMA 3). Translate `.po` or `.txt` files line by line into gettext format (`msgid`/`msgstr`). Supports Windows, macOS, and Linux.  
 
