@@ -1,67 +1,80 @@
 import requests
 import time
+import re
 
-INPUT_FILE = "messages.txt"
-OUTPUT_FILE = "messages_en.po"
-MODEL_NAME = "llama3"
-LANGUAGE = "English"  # change to any language supported by the model
+# 🛠️ CONFIGURATION
+OLLAMA_URL = "http://localhost:11434/api/generate"
+MODEL = "llama3"
+TARGET_LANG = "en"  # Change here: "en", "de", "es", "it", etc.
+DELAY = 1.0  # Delay between calls to avoid overload
 
-def translate_text(text):
-    prompt = f'Translate the following French phrase to {LANGUAGE}, respond ONLY with the translated phrase, nothing else:\n"{text.strip()}"'
+INPUT_FILE = "messages.po"
+OUTPUT_FILE = f"messages_{TARGET_LANG}.po"
 
-    response = requests.post(
-        "http://localhost:11434/api/generate",
-        json={"model": MODEL_NAME, "prompt": prompt, "stream": False}
-    )
-    
-    if response.status_code != 200:
-        print(f"❌ Error: {response.status_code}")
-        return "[TRANSLATION ERROR]"
-    
+def ask_ollama(text, lang):
+    prompt = f'Translate the following from French to {lang.upper()}.\nReturn only the translation:\n\n"{text}"'
     try:
-        result = response.json()["response"]
-        result = clean_translation(result)
-        return result
+        res = requests.post(OLLAMA_URL, json={
+            "model": MODEL,
+            "prompt": prompt,
+            "stream": False
+        })
+        if res.status_code == 200:
+            translation = res.json().get("response", "").strip()
+            return translation.replace('"', '').strip()
+        else:
+            print(f"⚠️ HTTP Error {res.status_code} for text: {text}")
+            return ""
     except Exception as e:
-        print("❌ Parsing error:", e)
-        return "[TRANSLATION ERROR]"
-
-def clean_translation(response_text):
-    """
-    Extracts the most probable single-line translation from the LLM's verbose response.
-    """
-    lines = response_text.strip().split("\n")
-    # Find first valid line that is not empty or explaining things
-    for line in lines:
-        line = line.strip().strip('"')  # remove extra quotes
-        if line and not any(k in line.lower() for k in ["translation", "means", "breakdown", "example", "let me", "here is"]):
-            return line
-    return response_text.strip()
+        print(f"❌ Exception: {e}")
+        return ""
 
 def main():
-    with open(INPUT_FILE, "r", encoding="utf-8") as infile:
-        lines = infile.readlines()
+    with open(INPUT_FILE, "r", encoding="utf-8") as f_in:
+        lines = f_in.readlines()
 
-    output_lines = []
-    current_comment = ""
+    output = []
+    i = 0
 
-    for line in lines:
-        line = line.strip()
-        if not line:
+    while i < len(lines):
+        line = lines[i]
+
+        # Keep comment lines
+        if line.strip().startswith("#:"):
+            output.append(line)
+            i += 1
             continue
-        if line.startswith("#:"):
-            current_comment = line
+
+        # If line is msgid
+        if line.strip().startswith('msgid'):
+            match = re.match(r'msgid\s+"(.*)"', line.strip())
+            if match:
+                msgid_text = match.group(1)
+
+                if (i + 1 < len(lines)) and lines[i + 1].strip().startswith('msgstr ""'):
+                    translated = ask_ollama(msgid_text, TARGET_LANG)
+
+                    print(f"\n📥 msgid: \"{msgid_text}\"\n🌍 msgstr: \"{translated}\"\n")
+
+                    output.append(f'msgid "{msgid_text}"\n')
+                    output.append(f'msgstr "{translated}"\n\n')
+
+                    i += 2
+                    time.sleep(DELAY)
+                else:
+                    output.append(line)
+                    i += 1
+            else:
+                output.append(line)
+                i += 1
         else:
-            original = line
-            translation = translate_text(original)
-            output_lines.append(f"{current_comment}\nmsgid \"{original}\"\nmsgstr \"{translation}\"\n")
-            print(f"✔️ {original} => {translation}")
-            time.sleep(1.5)  # polite delay for local model
+            output.append(line)
+            i += 1
 
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as outfile:
-        outfile.write("\n".join(output_lines))
+    with open(OUTPUT_FILE, "w", encoding="utf-8") as f_out:
+        f_out.writelines(output)
 
-    print(f"\n✅ Done. Translations saved to {OUTPUT_FILE}")
+    print(f"\n✅ Translation complete! File saved as: {OUTPUT_FILE}")
 
 if __name__ == "__main__":
     main()
