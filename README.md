@@ -1,4 +1,4 @@
-# Auto-Babel_Flask_traduction
+# Auto-Babel_Flask_traduction FREE and LOCAL, not using API
 Automatic PO translation using a local Ollama AI model (LLaMA 3). Translate .po or .txt files line by line into gettext format (msgid/msgstr). Supports Windows, macOS, and Linux.
 
 
