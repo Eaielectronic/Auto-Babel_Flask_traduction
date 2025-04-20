@@ -1,41 +1,67 @@
 import requests
 import time
 
-input_file = "messages.txt"
-output_file = "messages_en.po"
+INPUT_FILE = "messages.txt"
+OUTPUT_FILE = "messages_en.po"
+MODEL_NAME = "llama3"
+LANGUAGE = "English"  # change to any language supported by the model
 
-# Fonction de traduction via Ollama local
-def translate_with_ollama(prompt_text, model="llama3"):
+def translate_text(text):
+    prompt = f'Translate the following French phrase to {LANGUAGE}, respond ONLY with the translated phrase, nothing else:\n"{text.strip()}"'
+
     response = requests.post(
         "http://localhost:11434/api/generate",
-        json={
-            "model": model,
-            "prompt": f"Translate this text from French to English:\n\n{prompt_text}",
-            "stream": False
-        }
+        json={"model": MODEL_NAME, "prompt": prompt, "stream": False}
     )
-    if response.ok:
-        return response.json().get("response", "").strip()
-    else:
-        print(f"❌ Erreur lors de la requête : {response.status_code}")
+    
+    if response.status_code != 200:
+        print(f"❌ Error: {response.status_code}")
+        return "[TRANSLATION ERROR]"
+    
+    try:
+        result = response.json()["response"]
+        result = clean_translation(result)
+        return result
+    except Exception as e:
+        print("❌ Parsing error:", e)
         return "[TRANSLATION ERROR]"
 
-with open(input_file, "r", encoding="utf-8") as infile, open(output_file, "w", encoding="utf-8") as outfile:
-    lines = infile.readlines()
-    i = 0
-    while i < len(lines):
-        line = lines[i].strip()
-        if line.startswith("#:"):
-            context = line
-            i += 1
-            if i < len(lines):
-                original = lines[i].strip()
-                if original:
-                    translated = translate_with_ollama(original)
-                    po_entry = f'{context}\nmsgid "{original}"\nmsgstr "{translated}"\n\n'
-                    outfile.write(po_entry)
-                    print(f"✔️ Traduit : {original} => {translated}")
-                    time.sleep(0.5)  # Petite pause pour éviter de spammer Ollama
-        i += 1
+def clean_translation(response_text):
+    """
+    Extracts the most probable single-line translation from the LLM's verbose response.
+    """
+    lines = response_text.strip().split("\n")
+    # Find first valid line that is not empty or explaining things
+    for line in lines:
+        line = line.strip().strip('"')  # remove extra quotes
+        if line and not any(k in line.lower() for k in ["translation", "means", "breakdown", "example", "let me", "here is"]):
+            return line
+    return response_text.strip()
 
-print("✅ Fichier .po généré :", output_file)
+def main():
+    with open(INPUT_FILE, "r", encoding="utf-8") as infile:
+        lines = infile.readlines()
+
+    output_lines = []
+    current_comment = ""
+
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith("#:"):
+            current_comment = line
+        else:
+            original = line
+            translation = translate_text(original)
+            output_lines.append(f"{current_comment}\nmsgid \"{original}\"\nmsgstr \"{translation}\"\n")
+            print(f"✔️ {original} => {translation}")
+            time.sleep(1.5)  # polite delay for local model
+
+    with open(OUTPUT_FILE, "w", encoding="utf-8") as outfile:
+        outfile.write("\n".join(output_lines))
+
+    print(f"\n✅ Done. Translations saved to {OUTPUT_FILE}")
+
+if __name__ == "__main__":
+    main()
